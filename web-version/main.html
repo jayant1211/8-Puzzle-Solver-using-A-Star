@@ -10,19 +10,47 @@
     <div id="title">8 Puzzle Solver</div>
 
     <div class="section">
-        <div class="imgholder">
+        <!-- <div class="imgholder">
             <img src="rsc/img-placeholder.png" alt="img-icon" id="img-icon" class="pre-img">
             <p class="pre-img">upload image to start solving the puzzle!</p>
-            <input type="file" accept="image/*" id="imageInput" style="display: none;">
+            <input type="file" accept="image/*" id="imageInput" class="hidden">
+            <div class="post-img" style="display: none;">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+        </div> -->
+        <div class="img-section">
+            <div class="pre-state">
+                <img src="rsc/img-placeholder.png" alt="img-icon" id="img-icon">
+                <p>upload image to start solving the puzzle!</p>
+                <input type="file" accept="image/*" id="imageInput" class="hidden">
+            </div>
+
+            <canvas id="previewCanvas" class="hidden"></canvas>
+
+            <div class="post-state hidden">
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+                <canvas width="133" height="133"></canvas>
+            </div>
         </div>
+
         <div class="nav-buttons">
             <button id="jumble">Jumble</button>
             <button id="prev">Previous</button>
             <button id="next">Next</button>
         </div>
+
     </div>
 
-    
+
+
+    <script async src="rsc/opencv.js" onload="onOpenCvReady();"></script>
     <script src="app.js"></script>
 </body>
 </html>

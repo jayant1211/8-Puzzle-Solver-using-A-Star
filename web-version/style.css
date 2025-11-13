@@ -8,6 +8,11 @@
     src: url(rsc/fonts/LINESeedSans_W_Rg.woff2);
 }
 
+@font-face {
+    font-family: 'sixty-four';
+    src: url(rsc/fonts/Sixtyfour/Sixtyfour-Regular-VariableFont_BLED\,SCAN.ttf);
+}
+
 * {
     font-family: 'line-seed-reg', sans-serif;
     text-decoration: none;
@@ -20,18 +25,17 @@
 body {
   height: 100vh;
   margin: 0;
-  background: linear-gradient(to bottom, #9fe4f4, #2193b0);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background: #faecb6;
 }
 
 #title{
     display: flex;
+    text-transform: uppercase;
     /* width: 100%; */
     height: 10vh;
     padding: 60px;
     justify-content: center;
-    font-family: 'line-seed-thin';
+    font-family: 'sixty-four';
     font-size:50px;
 }
 
@@ -44,7 +48,7 @@ body {
     margin-top: 50px;
 }
 
-.imgholder {
+.img-section {
     border-radius: 20px;
     box-shadow: 0px 4px 8px 2px rgb(90, 90, 90);
     display: flex;
@@ -54,11 +58,19 @@ body {
     width: 400px;
     height: 400px;    
     background: white;
-    color: rgb(201, 201, 201);
     transition: transform 0.5s;
 }
 
-.imgholder:hover{
+#img-icon {
+    opacity: 0.4;
+}
+
+.img-section p {
+    font-family: 'line-seed-thin';
+    color: rgba(112, 112, 112, 0.505);
+}
+
+.img-section:hover{
     transform: translateY(-4px);
 }
 
@@ -69,6 +81,13 @@ body {
 #img-icon {
     width: 100px;
     height: 100px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
 }
 
 .nav-buttons{
@@ -84,7 +103,7 @@ body {
     font-size: x-large;
     padding: 5px 20px;
     border-radius: 6px;
-    font-family: 'line-seed-thin';
+    font-family: 'line-seed-reg';
     color: white;
     border: none;
     cursor: pointer;
@@ -116,13 +135,15 @@ button:hover {
 }
 
 #jumble {
-    background: rgb(245, 123, 123);
+    background: #f96635;
 }
 
 #prev {
-    background: rgb(123, 131, 245);
+    background: #93d3ae;
 }
 
 #next {
-    background: rgb(70, 230, 94);
+    background: #2b9dba;
 }
+
+
