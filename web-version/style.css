@@ -146,4 +146,10 @@ button:hover {
     background: #2b9dba;
 }
 
+#jumble.disabled {
+    background: rgb(178, 178, 178);
+}
 
+#jumble.disabled:hover {
+    cursor: not-allowed;
+}

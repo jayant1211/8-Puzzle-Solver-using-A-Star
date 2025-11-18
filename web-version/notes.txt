@@ -1,3 +1,9 @@
+Current Issues:
+1. jumbling is cropping some images out. check sizing logic for cropped tiles.
+
+
+
+#TODOS:
 - [ ] make this retro themed 
 
 working principle:
