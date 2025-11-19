@@ -1,13 +1,21 @@
-const img_placeholder = document.querySelector('.img-section')
+const img_placeholder = document.querySelector('.img-section');
 const imageInput = document.getElementById('imageInput');
 const preImage = document.querySelectorAll('.pre-state');
 const postImage = document.querySelector('.post-state');
 const preCanvas = document.querySelector('#previewCanvas');
 const jumble = document.querySelector('#jumble');
 
-img_placeholder.addEventListener('click', ()=>{
+let originalTiles = null;  
+let intial_state = null;
+const goal_state = [["1","2","3"],
+                    ["4","5","6"],
+                    ["7","8","_"]];
+
+img_placeholder.addEventListener('click', () => {
     imageInput.click();
-})
+});
+
+import { solveAStar } from "./a_star.js";
 
 imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -15,7 +23,6 @@ imageInput.addEventListener('change', (e) => {
 
     const url = URL.createObjectURL(file);
 
-    // img_placeholder.style.background = `url(${url}) center/cover no-repeat`;
     preImage.forEach(x => x.classList.add('hidden'));
     preCanvas.classList.remove('hidden');
 
@@ -23,24 +30,22 @@ imageInput.addEventListener('change', (e) => {
     imgEl.src = url;
 
     imgEl.onload = async () => {
-        // postImage.style.display = 'block';
         const tryShowOnCanvas = () => {
             if (typeof cv === 'undefined') {
-                console.log('OpenCV not ready');
                 setTimeout(tryShowOnCanvas, 100);
                 return;
             }
 
             try {
                 const srcMat = cv.imread(imgEl);
-                const TARGET = 400;
+                const TARGET = 399;
                 const dsize = new cv.Size(TARGET, TARGET);
 
                 const dstMat = new cv.Mat();
                 cv.resize(srcMat, dstMat, dsize, 0, 0, cv.INTER_AREA);
 
-                previewCanvas.width  = TARGET;
-                previewCanvas.height = TARGET;
+                preCanvas.width = TARGET;
+                preCanvas.height = TARGET;
                 cv.imshow('previewCanvas', dstMat);
 
                 srcMat.delete();
@@ -49,71 +54,89 @@ imageInput.addEventListener('change', (e) => {
                 console.error('Error processing image with OpenCV:', err);
             }
         };
+
         jumble.classList.remove('disabled');
         tryShowOnCanvas();
+        originalTiles = null; // reset for new image load
     };
 });
 
-
-//TODO: jumbling has issue on first click, tiles are not rendering
-//TODO: clearing previous state
-
 function splitImageIntoTiles() {
-    const src = cv.imread(previewCanvas);
-
-    previewCanvas.style.width  = previewCanvas.width + "px";
-    previewCanvas.style.height = previewCanvas.height + "px";
-
-
+    const src = cv.imread(preCanvas);
 
     const TILE = 3;
-    const tileW = previewCanvas.width / TILE;   // no floor
-    const tileH = previewCanvas.height / TILE;
+    const tileW = preCanvas.width / TILE;
+    const tileH = preCanvas.height / TILE;
 
+    const tileCanvases = Array.from(document.querySelectorAll(".post-state canvas"));
 
-    const tileCanvases = document.querySelectorAll(".post-state canvas");
-    console.log(tileCanvases);
+    if (!originalTiles) {
+        originalTiles = [];
+        for (let r = 0; r < TILE; r++) {
+            for (let c = 0; c < TILE; c++) {
+                const rect = new cv.Rect(c * tileW, r * tileH, tileW, tileH);
+                let roi = src.roi(rect);
 
-    let canvas_arr = [0,1,2,3,4,5,6,7,8];
-
-    for (let r = 0; r < TILE; r++) {
-        for (let c = 0; c < TILE; c++) {
-            let idx = (Math.random()*(canvas_arr.length) | 0)
-            const tile = tileCanvases[idx];
-            console.log(`assigning ${canvas_arr[idx]} to some value`);
-
-            canvas_arr.splice(idx,1);
-            // console.log(idx);
-            // console.log(canvas_arr);
-            tile.width  = tileW;
-            tile.height = tileH;
-
-
-            let tmp = new cv.Mat();
-            let rect = new cv.Rect(c * tileW, r * tileH, tileW, tileH);
-            tmp = src.roi(rect);
-            
-
-            cv.imshow(tile, tmp);
-            tmp.delete();
+                // draw text on tile
+                cv.putText(
+                    roi,
+                    `${r * TILE + c + 1}`,               
+                    new cv.Point(20, 40),            
+                    cv.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    new cv.Scalar(0, 255, 0, 255),     
+                    2
+                );
+                const tile = src.roi(rect).clone();
+                originalTiles.push(tile);
+            }
         }
     }
 
+    //remove last tile; push blank
+    originalTiles.splice(8,1);
+    let blank = new cv.Mat(tileH, tileW, cv.CV_8UC3, new cv.Scalar(255,255,255,255));
+    originalTiles.push(blank);
+
+    let shuffle = [0,1,2,3,4,5,6,7,8].sort(() => Math.random() - 0.5);
+    const temp_tiles = originalTiles.slice();
+
+    let temp_intial_state = []
+
+    tileCanvases.forEach((canvas, i) => {
+        canvas.width = tileW;
+        canvas.height = tileH;
+        cv.imshow(canvas, temp_tiles[shuffle[i]]);
+        temp_intial_state.push(shuffle[i]);
+    });
+
+    intial_state = [];
+    for(let i=0;i<3;i++){
+        let temp = [];
+        for(let j=0;j<3;j++){
+            let s = String(temp_intial_state[`${3*i + j}`] + 1);
+            s = s=="9"?"_":s;
+            temp.push(s);
+        }
+        intial_state.push(temp);
+    }
+
+    console.log(intial_state);
+    
     src.delete();
 }
 
-
 jumble.addEventListener("click", () => {
-    if(jumble.classList.contains('disabled')) return; //maybe add hovered text msg here (on pointer)
-    previewCanvas.classList.add("hidden");
+    if (jumble.classList.contains('disabled')) return;
+
+    preCanvas.classList.add("hidden");
     postImage.classList.remove("hidden");
     postImage.classList.add("grid");
 
-    void postImage.offsetHeight; //let grid for postImage be initalized first
-
-    jumble.classList.add("disabled");
+    void postImage.offsetHeight;
 
     splitImageIntoTiles();
+    solveAStar(intial_state,goal_state);
 });
 
 function onOpenCvReady() {
