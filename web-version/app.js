@@ -4,18 +4,22 @@ const preImage = document.querySelectorAll('.pre-state');
 const postImage = document.querySelector('.post-state');
 const preCanvas = document.querySelector('#previewCanvas');
 const jumble = document.querySelector('#jumble');
+const solve_button = document.querySelector('#solve_button');
 
 let originalTiles = null;  
 let intial_state = null;
-const goal_state = [["1","2","3"],
-                    ["4","5","6"],
-                    ["7","8","_"]];
+// const goal_state_matrix = [[1,2,3],
+//                     [4,5,6],
+//                     [7,8,0]];
+
+const goal_state = [1,2,3,4,5,6,7,8,0];
+const log_states = false; //logging all states
 
 img_placeholder.addEventListener('click', () => {
     imageInput.click();
 });
 
-import { solveAStar } from "./a_star.js";
+import { solve, reconstructPath } from "./a_star.js";
 
 imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -61,6 +65,21 @@ imageInput.addEventListener('change', (e) => {
     };
 });
 
+function inversionCount(arr) {
+    let inv = 0;
+    for (let i = 0; i < 9; i++) {
+        for (let j = i + 1; j < 9; j++) {
+            if (arr[i] !== 0 && arr[j] !== 0 && arr[i] > arr[j]) inv++;
+        }
+    }
+    return inv;
+}
+
+function isSolvable(arr) {
+    return inversionCount(arr) % 2 === 0; //solvable inversion for 3x3 has to be in even parity
+}
+
+
 function splitImageIntoTiles() {
     const src = cv.imread(preCanvas);
 
@@ -98,7 +117,17 @@ function splitImageIntoTiles() {
     let blank = new cv.Mat(tileH, tileW, cv.CV_8UC3, new cv.Scalar(255,255,255,255));
     originalTiles.push(blank);
 
-    let shuffle = [0,1,2,3,4,5,6,7,8].sort(() => Math.random() - 0.5);
+    // let shuffle = [0,1,2,3,4,5,6,7,8].sort(() => Math.random() - 0.5);
+    let shuffle = null;
+    while (true) {
+        const candidate = [0,1,2,3,4,5,6,7,8].sort(() => Math.random() - 0.5);
+        const mapped = candidate.map(x => x + 1 === 9 ? 0 : x + 1);
+        if (isSolvable(mapped)) {
+            shuffle = candidate;
+            break;
+        }
+    }
+
     const temp_tiles = originalTiles.slice();
 
     let temp_intial_state = []
@@ -111,17 +140,20 @@ function splitImageIntoTiles() {
     });
 
     intial_state = [];
-    for(let i=0;i<3;i++){
-        let temp = [];
-        for(let j=0;j<3;j++){
-            let s = String(temp_intial_state[`${3*i + j}`] + 1);
-            s = s=="9"?"_":s;
-            temp.push(s);
-        }
-        intial_state.push(temp);
+    for(let i=0;i<9;i++){
+        // let temp = [];
+        // for(let j=0;j<3;j++){
+        //     let s = temp_intial_state[`${3*i + j}`] + 1;
+        //     s = s==9?0:s;
+        //     temp.push(s);
+        // }
+        let s = temp_intial_state[`${i}`] + 1;
+        s = s==9?0:s;
+        intial_state.push(s);
     }
 
-    console.log(intial_state);
+    console.log(`Inital State:\n ${intial_state}`);
+    console.log(`Goal State:\n ${goal_state}`);
     
     src.delete();
 }
@@ -136,8 +168,18 @@ jumble.addEventListener("click", () => {
     void postImage.offsetHeight;
 
     splitImageIntoTiles();
-    solveAStar(intial_state,goal_state);
+    solve_button.classList.remove('disabled');
 });
+
+solve_button.addEventListener("click", ()=>{
+    if(solve_button.classList.contains('disabled')) {console.log('disbaled'); return;}
+    jumble.classList.add('disabled');
+    const finalState = solve(intial_state,goal_state, log_states);
+    const path = reconstructPath(finalState);
+    for(const state of path){
+        console.log(state);
+    }
+})
 
 function onOpenCvReady() {
     console.log('cv loaded');
